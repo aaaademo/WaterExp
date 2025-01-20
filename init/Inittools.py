@@ -3,6 +3,7 @@ import time
 import requests
 import console
 import sys
+import ssl
 
 th=40
 my_urlOks=[]
@@ -12,17 +13,30 @@ headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gec
            'Cookie': 'baidu=79212t0db8t7tkdiiaggr8f2tl',
            'Cache-Control': 'max-age=0',
            'connection': 'close'}
+
+class TLSAdapter(requests.adapters.HTTPAdapter):
+    def init_poolmanager(self, *args, **kwargs):
+        ctx = ssl.create_default_context()
+        ctx.set_ciphers("DEFAULT@SECLEVEL=1")
+        ctx.options |= 0x4   # <-- the key part here, OP_LEGACY_SERVER_CONNECT
+        kwargs["ssl_context"] = ctx
+        return super(TLSAdapter, self).init_poolmanager(*args, **kwargs)
+
+with requests.session() as req:
+    req.mount("https://", TLSAdapter())
+    # print(s.get(url).content.decode('utf-8'))
+
 def doscan(url):
     if not url[0:4] == "http": url = "http://" + url
     url=str.strip(url)
     try:
-        res = requests.get(url, verify=False, timeout=3, stream=True, headers=headers,)#proxies=proxy)
+        res = req.get(url, timeout=3, stream=True, headers=headers,)#proxies=proxy)
         status = res.status_code
         if status==400:
             print("\033[1;0;90m[*]"+url+"--400,开始使用https协议\033[0m")
             if (url[:7] == "http://"):
                 url = "https://" + url[7:]
-                res2 = requests.head(url, verify=False, timeout=3, stream=True, headers=headers,)#proxies=proxy)
+                res2 = requests.head(url, timeout=3, stream=True, headers=headers,)#proxies=proxy)
                 if(res2.status_code==400):
                     print("\033[1;0;90m[*]" + url + "--400,http和https都返回400,已移到my_urlErrs[]\033[0m")
                     # print(url+" ")
@@ -46,6 +60,7 @@ class Inittools:
 
         s=[]
         for i in urls:
+            print(i)
             t1 = threading.Thread(target=doscan, args=[i], kwargs={})
             s.append(t1)
         print("添加任务完成，共%d个"%(len(s)))
@@ -63,6 +78,7 @@ class Inittools:
             # print(threading.activeCount())
             time.sleep(1)
         return my_urlOks,my_urlErrs
+        # return s,my_urlErrs
     pass
 #
 

@@ -1,4 +1,4 @@
-import requests
+import requests,ssl
 from init.PrintEntity import PrintEntity
 from init.cmdline import parse_args
 
@@ -10,12 +10,21 @@ headers = {'Connection': 'keep-alive',
            'Accept-Encoding': 'gzip, deflate',
            'Accept-Language': 'zh-CN,zh;q=0.9',
 }
-#屏蔽SSl警告
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+# 屏蔽SSl警告
+# from requests.packages.urllib3.exceptions import InsecureRequestWarning
+# requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
+class TLSAdapter(requests.adapters.HTTPAdapter):
+    def init_poolmanager(self, *args, **kwargs):
+        ctx = ssl.create_default_context()
+        ctx.set_ciphers("DEFAULT@SECLEVEL=1")
+        ctx.options |= 0x4   # <-- the key part here, OP_LEGACY_SERVER_CONNECT
+        kwargs["ssl_context"] = ctx
+        return super(TLSAdapter, self).init_poolmanager(*args, **kwargs)
 
-
+with requests.session() as req:
+    req.mount("https://", TLSAdapter())
+    # print(s.get(url).content.decode('utf-8'))
 
 class HeaderVlun:
     printEntity=PrintEntity(2)#设置2级显示块
@@ -24,7 +33,7 @@ class HeaderVlun:
     def getHeaders(self,url):
 
         try:
-            res = requests.get(url, verify=False, timeout=3, stream=True, headers=headers, )
+            res = req.get(url, timeout=3, stream=True, headers=headers, )
             self.printEntity.printDefault("[*] GET method Headers Response:"+str(res.status_code))
             return res.headers
         except Exception as e:
@@ -88,11 +97,11 @@ class HeaderVlun:
     def getOptionsVlun(self,url):
         result=[]
         try:
-            res=requests.options(url, verify=False, timeout=3, stream=True, headers=headers, )
+            res=req.options(url, timeout=3, stream=True, headers=headers, )
             if 'Allow' in res.headers:
                 self.printEntity.showUnvipInfo2('[*] 支持方法'+res.headers['Allow'])
                 # methods=res.headers['Allow'].split(',')
-            res=requests.request('trace',url, verify=False, timeout=3, stream=True, headers=headers, )
+            res=req.request('trace',url, timeout=3, stream=True, headers=headers, )
             if res.status_code==200:
                 self.printEntity.showVulnInfo('[+] TRACE 方法启用')
                 result.append("(不安全HTTP方法) TRACE 方法启用")
@@ -105,7 +114,7 @@ class HeaderVlun:
 
 
         except Exception as e:
-            # print()
+            print(e)
             # self.printEntity.showUnvipInfo2(url+"错误"+str(e))
             self.printEntity.showUnvipInfo2(url+"错误"+e.__class__.__name__)
         return result
@@ -118,7 +127,7 @@ class HeaderVlun:
             if url[-1:]=="/":                                           #去掉主机末尾的/
                 url=url[0:-1]
             url=url+"/esssdad"
-            res=requests.get(url, verify=False, timeout=3, stream=True, headers=headers, )
+            res=req.get(url, timeout=3, stream=True, headers=headers, )
             if res.status_code==404 or res.status_code==500 or res.status_code==403:
                 paths=(re.findall(r"[cdexf]:\\[\w]+\\[\w]+[\\\w\.]+",res.text,re.I))
                 paths=tuple(set(paths))#去重

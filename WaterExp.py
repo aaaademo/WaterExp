@@ -47,6 +47,7 @@ if __name__ == '__main__':
         print("[+] 开始扫描单个目标 "+options.url)
         urls.append(options.url)
         okurls,errUrls=Inittools.getokurls(None,urls)
+        print(okurls[0])
         scanSingle(okurls[0])
     if options.urls:
         # globals(urls)

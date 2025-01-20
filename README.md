@@ -2,6 +2,30 @@
 ![30x30](https://user-images.githubusercontent.com/96420060/179494641-89ede898-38fb-42dd-b0e2-d36d643dd847.jpg)
 
 
+## 20250120-修复SSL错误（_ssl.c:1007）
+
+```python
+import ssl
+import requests
+
+class TLSAdapter(requests.adapters.HTTPAdapter):
+    def init_poolmanager(self, *args, **kwargs):
+        ctx = ssl.create_default_context()
+        ctx.set_ciphers("DEFAULT@SECLEVEL=1")
+        ctx.options |= 0x4   # <-- the key part here, OP_LEGACY_SERVER_CONNECT
+        kwargs["ssl_context"] = ctx
+        return super(TLSAdapter, self).init_poolmanager(*args, **kwargs)
+
+url = 'https://xxx.com/'
+
+with requests.session() as s:
+    s.mount("https://", TLSAdapter())
+    print(s.get(url).content.decode('utf-8'))
+
+
+```
+
+
 # WaterExp：一款面向安服仔的扫描报告模板 和 碰瓷工具 
 █ 打工人新时代的摸鱼解决方案，安抚仔挖不到洞的最后一丝欢颜！
   
