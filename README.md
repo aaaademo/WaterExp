@@ -56,15 +56,3 @@ with requests.session() as s:
 
 扫描结果
 ![image](https://user-images.githubusercontent.com/96420060/179387420-0bc4d65c-5d74-4ea4-a476-23b6409c8c48.png)
-
-# 编程，免杀，工具开发 深入交流小圈子
-绕过您有更多的好检测的洞请告诉我添加进去哦~
-互相帮助才能打更好的工，摸更漂亮的鱼过期加拉哦
-
-![image](https://user-images.githubusercontent.com/96420060/189295166-8e2a46f4-b9b0-4339-9e5d-7389334dca7a.png)
-
-![image](https://user-images.githubusercontent.com/96420060/195889411-34b82fd4-8f22-416c-b781-d3b256a00d2b.png)
-
-
-# Star
-[![Stargazers over time](https://starchart.cc/linshaoSec/WaterExp.svg)](https://starchart.cc/linshaoSec/WaterExp)
